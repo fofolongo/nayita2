@@ -126,7 +126,7 @@
             assistantMsg.innerText = "Asistente: " + data.assistant;
             outputDiv.appendChild(userMsg);
             outputDiv.appendChild(assistantMsg);
-            // Auto-scroll to the bottom
+            // Auto-scroll to the bottom when new text appears
             outputDiv.scrollTop = outputDiv.scrollHeight;
           } else if (data.error) {
             outputDiv.innerText = 'Error: ' + data.error;
