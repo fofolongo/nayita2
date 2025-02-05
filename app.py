@@ -77,9 +77,6 @@ def transcribe():
         with open(output_filename, "rb") as f:
             transcript = openai.Audio.transcribe("whisper-1", f)
         user_text = transcript["text"]
-        # Append current date as a system message
-        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        conversation.append({"role": "system", "content": "Fecha actual: " + current_date})
         # Add the user's transcribed text to conversation history.
         conversation.append({"role": "user", "content": user_text})
         # Perform an internet search using the transcribed text to add context.
@@ -92,6 +89,8 @@ def transcribe():
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
         conversation.append({"role": "assistant", "content": assistant_text})
+        # Optionally, include the current date in the response (but not display it)
+        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return jsonify({"transcript": user_text, "assistant": assistant_text, "date": current_date})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
