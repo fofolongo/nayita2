@@ -64,7 +64,7 @@
             audioChunks = [];
           };
 
-          // Usar eventos pointer para dispositivos compatibles
+          // Use pointer events
           recordBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "inactive") {
@@ -87,7 +87,7 @@
             }
           });
 
-          // Fallback para eventos touch
+          // Fallback for touch events
           recordBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "inactive") {
@@ -127,19 +127,16 @@
             outputDiv.appendChild(userMsg);
             outputDiv.appendChild(assistantMsg);
             
-            // Create an audio element to play the assistant's response automatically
+            // Create an audio element and play the assistant's response automatically (without looping)
             const audioEl = document.createElement('audio');
             audioEl.src = data.assistant_audio;
-            // Optional: hide controls if you want seamless playback
-            audioEl.style.display = 'none';
-            document.body.appendChild(audioEl);
-            // Auto-play the audio if allowed (may require user interaction in some browsers)
-            audioEl.play().catch(error => {
-              console.error("Auto-play was prevented:", error);
-              // Optionally show controls if auto-play is blocked
-              audioEl.style.display = 'block';
-              audioEl.controls = true;
+            audioEl.loop = false;      // Ensure it doesn't loop
+            audioEl.autoplay = true;   // Try to auto-play
+            // Remove the element after playback finishes
+            audioEl.addEventListener('ended', () => {
+              audioEl.remove();
             });
+            document.body.appendChild(audioEl);
             
             // Auto-scroll to the bottom when new text appears
             outputDiv.scrollTop = outputDiv.scrollHeight;
