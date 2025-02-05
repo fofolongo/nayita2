@@ -29,6 +29,8 @@
         margin-top: 250px;
         font-size: 36px;
         font-family: Arial, sans-serif;
+        max-height: calc(100vh - 250px);
+        overflow-y: auto;
       }
       .message {
         margin-bottom: 15px;
@@ -42,7 +44,7 @@
     </style>
   </head>
   <body>
-    <button id="recordBtn">mande?</button>
+    <button id="recordBtn">mande1?</button>
     <div id="output"></div>
     <script>
       let mediaRecorder;
@@ -124,6 +126,8 @@
             assistantMsg.innerText = "Asistente: " + data.assistant;
             outputDiv.appendChild(userMsg);
             outputDiv.appendChild(assistantMsg);
+            // Auto-scroll to the bottom
+            outputDiv.scrollTop = outputDiv.scrollHeight;
           } else if (data.error) {
             outputDiv.innerText = 'Error: ' + data.error;
           }

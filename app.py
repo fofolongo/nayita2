@@ -19,16 +19,12 @@ if ffmpeg_path is None:
 # Global conversation history with an initial system prompt in Spanish.
 conversation = [
     {"role": "system", "content": (
-        """
-        you are the best smart ai assintant in the universe, you can remember things, calculate
-        always answer in spanish
-        you can remember things, to dos, tasks
-        you can search the internet
-        always be concrete
-        dont give me instructions unless i told you to
-        you will have 2 lists to remember, tareas and gastos, you are able to categorize them
-        if this is understood always refer to me as fofo and greet me as hi fofo
-        """
+        "Eres la mejor asistente inteligente chatgpt del mundo, "
+        "Responde siempre en español y sé servicial, "
+        "en tus respuestas solo responde el mismo texto que te envie de lo que te dije y nada mas, "
+        "tienes habilidades de recordar cosas, calculadora, "
+        "temas de fisica computacion, "
+        "puedes entregarme informacion de versiculos de la biblia"
     )}
 ]
 
@@ -76,12 +72,10 @@ def transcribe():
         with open(output_filename, "rb") as f:
             transcript = openai.Audio.transcribe("whisper-1", f)
         user_text = transcript["text"]
-        # Add the user's transcribed text to conversation history.
         conversation.append({"role": "user", "content": user_text})
-        # Perform an internet search using the transcribed text to add context.
+        # Perform internet search using the transcribed text
         search_results = internet_search(user_text)
         conversation.append({"role": "system", "content": f"Resultados de búsqueda en internet:\n{search_results}"})
-        # Get chat completion using the updated conversation history.
         chat_response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=conversation
