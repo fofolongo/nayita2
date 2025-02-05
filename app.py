@@ -16,8 +16,10 @@ if ffmpeg_path is None:
     if ffmpeg_path is None or not os.path.exists(ffmpeg_path):
         raise EnvironmentError("ffmpeg not found in PATH. Please install ffmpeg and add it to your system PATH, or set the FFMPEG_PATH environment variable to the full path of the ffmpeg executable.")
 
-# Create a log filename that includes the creation date with hours and minutes.
-log_filename = "interaction_" + datetime.now().strftime("%Y%m%d_%H%M") + ".log"
+# Create a logs directory to persist log files even if the server is restarted.
+logs_dir = "logs"
+os.makedirs(logs_dir, exist_ok=True)
+log_filename = os.path.join(logs_dir, "interaction.log")
 
 # Global conversation history with an initial system prompt in Spanish.
 conversation = [
@@ -55,7 +57,7 @@ def internet_search(query):
         return f"Resultados simulados para la búsqueda: {query}"
 
 def log_interaction(user_text, assistant_text):
-    # Append a timestamped log entry to the log file named with creation date.
+    # Append a timestamped log entry to the persistent log file.
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_entry = f"{timestamp} - Usuario: {user_text}\nAsistente: {assistant_text}\n{'-'*50}\n"
     with open(log_filename, "a", encoding="utf-8") as log_file:
