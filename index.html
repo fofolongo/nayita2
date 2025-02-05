@@ -127,18 +127,19 @@
             outputDiv.appendChild(userMsg);
             outputDiv.appendChild(assistantMsg);
             
-            // Create an audio element and play the assistant's response automatically (without looping)
+            // Create an audio element and auto-play the assistant's response
             const audioEl = document.createElement('audio');
-            audioEl.src = data.assistant_audio;
-            audioEl.loop = false;      // Ensure it doesn't loop
-            audioEl.autoplay = true;   // Try to auto-play
-            // Remove the element after playback finishes
+            // Append a timestamp to avoid caching (e.g., ?t=timestamp)
+            audioEl.src = data.assistant_audio + "?t=" + new Date().getTime();
+            audioEl.loop = false;
+            audioEl.autoplay = true;
+            // Remove the audio element after playback ends
             audioEl.addEventListener('ended', () => {
               audioEl.remove();
             });
             document.body.appendChild(audioEl);
             
-            // Auto-scroll to the bottom when new text appears
+            // Auto-scroll to the bottom
             outputDiv.scrollTop = outputDiv.scrollHeight;
           } else if (data.error) {
             outputDiv.innerText = 'Error: ' + data.error;
