@@ -6,7 +6,7 @@
     <title>Grabador de Audio y ChatGPT</title>
     <style>
       #recordBtn {
-        padding: 60px 240px; /* Botón más grande */
+        padding: 60px 300px; /* Botón más grande */
         font-size: 72px;    /* Texto más grande */
         background-color: #4CAF50;
         border: none;
@@ -15,6 +15,11 @@
         cursor: pointer;  
         user-select: none;
         touch-action: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
       }
       #recordBtn.pressed {
         background-color: #f44336;
