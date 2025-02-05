@@ -12,7 +12,7 @@
         border: none;
         color: white;
         border-radius: 24px;
-        cursor: pointer;  
+        cursor: pointer;
         user-select: none;
         touch-action: none;
         position: fixed;
@@ -41,15 +41,10 @@
       .assistant {
         color: #28a745;
       }
-      .timestamp {
-        font-size: 24px;
-        color: #555;
-        margin-bottom: 10px;
-      }
     </style>
   </head>
   <body>
-    <button id="recordBtn">mande?</button>
+    <button id="recordBtn">mande1?</button>
     <div id="output"></div>
     <script>
       let mediaRecorder;
@@ -122,17 +117,13 @@
         })
         .then(response => response.json())
         .then(data => {
-          if (data.transcript && data.assistant && data.date) {
-            const timestamp = document.createElement('div');
-            timestamp.className = 'timestamp';
-            timestamp.innerText = "Fecha: " + data.date;
+          if (data.transcript && data.assistant) {
             const userMsg = document.createElement('div');
             userMsg.className = 'message user';
             userMsg.innerText = "Usuario: " + data.transcript;
             const assistantMsg = document.createElement('div');
             assistantMsg.className = 'message assistant';
             assistantMsg.innerText = "Asistente: " + data.assistant;
-            outputDiv.appendChild(timestamp);
             outputDiv.appendChild(userMsg);
             outputDiv.appendChild(assistantMsg);
             // Auto-scroll to the bottom when new text appears
