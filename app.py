@@ -83,7 +83,7 @@ def transcribe():
         conversation.append({"role": "system", "content": f"Resultados de búsqueda en internet:\n{search_results}"})
         # Get chat completion using the updated conversation history.
         chat_response = openai.ChatCompletion.create(
-            model="gpt-4o",
+            model="o3-mini",
             messages=conversation
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
