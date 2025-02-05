@@ -17,7 +17,12 @@ if ffmpeg_path is None:
 
 # Global conversation history with an initial system prompt in Spanish.
 conversation = [
-    {"role": "system", "content": "Eres la mejor asistente inteligente chatgpt del mundo, Responde siempre en español y sé servicial, en tus respuestas solo has echo de lo que te dije y nada mas, tienes habilidades de recordar cosas, calculadora, temas de fisica computacion, puedes enrtegarme informacion de versiculos de la biblia"}
+    {"role": "system", "content": """Eres la mejor asistente inteligente chatgpt del mundo, 
+                                        Responde siempre en español y sé servicial, 
+                                        en tus respuestas solo responde el mismo texto que te envie de lo que te dije y nada mas, 
+                                        tienes habilidades de recordar cosas, calculadora, 
+                                        temas de fisica computacion, 
+                                        puedes entregarme informacion de versiculos de la biblia"""}
 ]
 
 @app.route('/')
