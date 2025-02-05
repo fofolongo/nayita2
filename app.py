@@ -2,6 +2,7 @@
 import os
 import subprocess
 import shutil
+import requests
 from flask import Flask, request, jsonify, send_from_directory
 import openai
 
@@ -17,13 +18,35 @@ if ffmpeg_path is None:
 
 # Global conversation history with an initial system prompt in Spanish.
 conversation = [
-    {"role": "system", "content": """Eres la mejor asistente inteligente chatgpt del mundo, 
-                                        Responde siempre en español y sé servicial, 
-                                        en tus respuestas solo responde el mismo texto que te envie de lo que te dije y nada mas, 
-                                        tienes habilidades de recordar cosas, calculadora, 
-                                        temas de fisica computacion, 
-                                        puedes entregarme informacion de versiculos de la biblia"""}
+    {"role": "system", "content": (
+        "Eres la mejor asistente inteligente chatgpt del mundo, "
+        "Responde siempre en español y sé servicial, "
+        #"en tus respuestas solo responde el mismo texto que te envie de lo que te dije a menos que te pregunte algo, "
+        "tienes habilidades de recordar cosas, calculadora, "
+        "temas de fisica computacion, "
+        "puedes entregarme informacion de versiculos de la biblia"
+    )}
 ]
+
+def internet_search(query):
+    # Replace this with actual search API integration if available.
+    # For demonstration, this function returns a simulated search result.
+    search_api_key = os.getenv("SEARCH_API_KEY")
+    search_endpoint = os.getenv("SEARCH_API_ENDPOINT")  # e.g., Bing Search API endpoint
+    if search_api_key and search_endpoint:
+        params = {"q": query, "count": 3}
+        headers = {"Ocp-Apim-Subscription-Key": search_api_key}
+        response = requests.get(search_endpoint, params=params, headers=headers)
+        if response.status_code == 200:
+            results = response.json()
+            snippets = []
+            for item in results.get("webPages", {}).get("value", []):
+                snippets.append(item.get("snippet", ""))
+            return "\n".join(snippets)
+        else:
+            return "No se pudieron obtener resultados de búsqueda."
+    else:
+        return f"Resultados simulados para la búsqueda: {query}"
 
 @app.route('/')
 def index():
@@ -49,15 +72,17 @@ def transcribe():
         with open(output_filename, "rb") as f:
             transcript = openai.Audio.transcribe("whisper-1", f)
         user_text = transcript["text"]
-        # Agregar el mensaje del usuario a la conversación
+        # Add the user's transcribed text to conversation history.
         conversation.append({"role": "user", "content": user_text})
-        # Obtener la respuesta de ChatGPT usando el historial de conversación
+        # Perform an internet search using the transcribed text to add context.
+        search_results = internet_search(user_text)
+        conversation.append({"role": "system", "content": f"Resultados de búsqueda en internet:\n{search_results}"})
+        # Get chat completion using the updated conversation history.
         chat_response = openai.ChatCompletion.create(
-            model="openai('o3-mini')",
+            model="gpt-4o-mini",
             messages=conversation
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
-        # Agregar la respuesta del asistente al historial
         conversation.append({"role": "assistant", "content": assistant_text})
         return jsonify({"transcript": user_text, "assistant": assistant_text})
     except Exception as e:
