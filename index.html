@@ -40,8 +40,8 @@
       .assistant {
         color: #28a745;
       }
-      /* Style for the Load Logs button on the right side */
-      #loadLogBtn {
+      /* Style for the buttons on the top right */
+      #loadLogBtn, #sendLogsBtn {
         position: fixed;
         right: 10px;
         top: 10px;
@@ -53,18 +53,25 @@
         border: none;
         border-radius: 8px;
         cursor: pointer;
+        margin-bottom: 5px;
+      }
+      /* Position second button below the first one */
+      #sendLogsBtn {
+        top: 60px;
       }
     </style>
   </head>
   <body>
     <button id="recordBtn">mande?</button>
     <button id="loadLogBtn">Load Logs</button>
+    <button id="sendLogsBtn">Send Logs as Prompt</button>
     <div id="output"></div>
     <script>
       let mediaRecorder;
       let audioChunks = [];
       const recordBtn = document.getElementById('recordBtn');
       const loadLogBtn = document.getElementById('loadLogBtn');
+      const sendLogsBtn = document.getElementById('sendLogsBtn');
       const outputDiv = document.getElementById('output');
 
       navigator.mediaDevices.getUserMedia({ audio: true })
@@ -135,10 +142,10 @@
           if (data.transcript && data.assistant) {
             const userMsg = document.createElement('div');
             userMsg.className = 'message user';
-            userMsg.innerText = "Fofo: " + data.transcript;
+            userMsg.innerText = "fofo: " + data.transcript;
             const assistantMsg = document.createElement('div');
             assistantMsg.className = 'message assistant';
-            assistantMsg.innerText = "Nayita: " + data.assistant;
+            assistantMsg.innerText = "nayita: " + data.assistant;
             outputDiv.appendChild(userMsg);
             outputDiv.appendChild(assistantMsg);
             // Auto-scroll to the bottom when new text appears
@@ -164,6 +171,21 @@
           })
           .catch(err => {
             console.error('Error loading logs:', err);
+          });
+      });
+
+      sendLogsBtn.addEventListener('click', () => {
+        fetch('/send_logs')
+          .then(response => response.json())
+          .then(data => {
+            const promptMsg = document.createElement('div');
+            promptMsg.className = 'message assistant';
+            promptMsg.innerText = "nayita (logs prompt): " + data.prompt_response;
+            outputDiv.appendChild(promptMsg);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+          })
+          .catch(err => {
+            console.error('Error sending logs as prompt:', err);
           });
       });
     </script>

@@ -16,21 +16,20 @@ if ffmpeg_path is None:
     if ffmpeg_path is None or not os.path.exists(ffmpeg_path):
         raise EnvironmentError("ffmpeg not found in PATH. Please install ffmpeg and add it to your system PATH, or set the FFMPEG_PATH environment variable to the full path of the ffmpeg executable.")
 
-# Create a logs directory to persist log files even if the server is restarted.
-logs_dir = "logs"
-os.makedirs(logs_dir, exist_ok=True)
-log_filename = os.path.join(logs_dir, "interaction.log")
+# Create a log filename that includes the creation date with hours and minutes.
+log_filename = "interaction_" + datetime.now().strftime("%Y%m%d_%H%M") + ".log"
 
 # Global conversation history with an initial system prompt in Spanish.
 conversation = [
     {"role": "system", "content": (
         """
-        you are the best smart ai assistant in the universe
+        you are the best smart ai assintant in the universe, you can remember things, calculate
         always answer in spanish
-        echo what i tell you when is a task or expense but the echo must be on the same category 
-        give me information when its not of tasks or expenses 
+        you can remember things, to dos, tasks
+        you can search the internet
+        always be concrete
         dont give me instructions unless i told you to
-        you will have 2 lists: tasks and expenses, you are able to categorize them from the prompt
+        you will have 2 lists to remember, tareas and gastos, you are able to categorize them
         if this is understood always refer to me as fofo and greet me as hi fofo
         """
     )}
@@ -57,7 +56,7 @@ def internet_search(query):
         return f"Resultados simulados para la búsqueda: {query}"
 
 def log_interaction(user_text, assistant_text):
-    # Append a timestamped log entry to the persistent log file.
+    # Append a timestamped log entry to the log file.
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_entry = f"{timestamp} - Usuario: {user_text}\nAsistente: {assistant_text}\n{'-'*50}\n"
     with open(log_filename, "a", encoding="utf-8") as log_file:
@@ -114,6 +113,30 @@ def load_logs():
         return jsonify({"logs": log_data})
     else:
         return jsonify({"logs": "No logs found."})
+
+@app.route('/send_logs', methods=['GET'])
+def send_logs():
+    """
+    Reads the current log file and sends its content as a new prompt.
+    The log content is appended as a new user message, then a chat completion is generated.
+    """
+    if os.path.exists(log_filename):
+        with open(log_filename, "r", encoding="utf-8") as f:
+            log_data = f.read()
+        # Append the logs as a new user prompt.
+        prompt = f"Estos son los logs previos:\n{log_data}"
+        conversation.append({"role": "user", "content": prompt})
+        chat_response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=conversation
+        )
+        assistant_text = chat_response["choices"][0]["message"]["content"]
+        conversation.append({"role": "assistant", "content": assistant_text})
+        # Optionally log this interaction as well.
+        log_interaction(prompt, assistant_text)
+        return jsonify({"prompt_response": assistant_text})
+    else:
+        return jsonify({"prompt_response": "No logs found."})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
