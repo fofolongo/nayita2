@@ -3,6 +3,7 @@ import os
 import subprocess
 import shutil
 import requests
+from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 import openai
 
@@ -15,6 +16,9 @@ if ffmpeg_path is None:
     ffmpeg_path = os.getenv("FFMPEG_PATH")
     if ffmpeg_path is None or not os.path.exists(ffmpeg_path):
         raise EnvironmentError("ffmpeg not found in PATH. Please install ffmpeg and add it to your system PATH, or set the FFMPEG_PATH environment variable to the full path of the ffmpeg executable.")
+
+# Create a log filename that includes the creation date with hours and minutes.
+log_filename = "interaction_" + datetime.now().strftime("%Y%m%d_%H%M") + ".log"
 
 # Global conversation history with an initial system prompt in Spanish.
 conversation = [
@@ -52,6 +56,13 @@ def internet_search(query):
     else:
         return f"Resultados simulados para la búsqueda: {query}"
 
+def log_interaction(user_text, assistant_text):
+    # Append a timestamped log entry to the log file.
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = f"{timestamp} - Usuario: {user_text}\nAsistente: {assistant_text}\n{'-'*50}\n"
+    with open(log_filename, "a", encoding="utf-8") as log_file:
+        log_file.write(log_entry)
+
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
@@ -76,18 +87,16 @@ def transcribe():
         with open(output_filename, "rb") as f:
             transcript = openai.Audio.transcribe("whisper-1", f)
         user_text = transcript["text"]
-        # Add the user's transcribed text to conversation history.
         conversation.append({"role": "user", "content": user_text})
-        # Perform an internet search using the transcribed text to add context.
         search_results = internet_search(user_text)
         conversation.append({"role": "system", "content": f"Resultados de búsqueda en internet:\n{search_results}"})
-        # Get chat completion using the updated conversation history.
         chat_response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=conversation
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
         conversation.append({"role": "assistant", "content": assistant_text})
+        log_interaction(user_text, assistant_text)
         return jsonify({"transcript": user_text, "assistant": assistant_text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -96,6 +105,16 @@ def transcribe():
             os.remove(input_filename)
         if os.path.exists(output_filename):
             os.remove(output_filename)
+
+# New endpoint to load previous logs
+@app.route('/load_logs', methods=['GET'])
+def load_logs():
+    if os.path.exists(log_filename):
+        with open(log_filename, "r", encoding="utf-8") as log_file:
+            logs = log_file.read()
+        return jsonify({"logs": logs})
+    else:
+        return jsonify({"logs": "No logs found."})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

@@ -24,6 +24,15 @@
       #recordBtn.pressed {
         background-color: #f44336;
       }
+      #loadLogsBtn {
+        position: fixed;
+        top: 80px;
+        left: 20px;
+        font-size: 24px;
+        padding: 10px 20px;
+        cursor: pointer;
+        z-index: 1001;
+      }
       /* Increase top margin for output to appear below the fixed button */
       #output {
         margin-top: 250px;
@@ -41,15 +50,23 @@
       .assistant {
         color: #28a745;
       }
+      .log {
+        font-size: 24px;
+        color: #555;
+        margin: 10px 0;
+        white-space: pre-wrap;
+      }
     </style>
   </head>
   <body>
     <button id="recordBtn">mande?</button>
+    <button id="loadLogsBtn">Cargar Logs Previos</button>
     <div id="output"></div>
     <script>
       let mediaRecorder;
       let audioChunks = [];
       const recordBtn = document.getElementById('recordBtn');
+      const loadLogsBtn = document.getElementById('loadLogsBtn');
       const outputDiv = document.getElementById('output');
 
       navigator.mediaDevices.getUserMedia({ audio: true })
@@ -136,6 +153,21 @@
           outputDiv.innerText = 'Error: ' + err;
         });
       }
+
+      loadLogsBtn.addEventListener('click', () => {
+        fetch('/load_logs')
+          .then(response => response.json())
+          .then(data => {
+            const logDiv = document.createElement('div');
+            logDiv.className = 'log';
+            logDiv.innerText = data.logs;
+            outputDiv.appendChild(logDiv);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+          })
+          .catch(err => {
+            outputDiv.innerText = 'Error cargando logs: ' + err;
+          });
+      });
     </script>
   </body>
 </html>
