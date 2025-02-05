@@ -53,7 +53,7 @@ def transcribe():
         conversation.append({"role": "user", "content": user_text})
         # Obtener la respuesta de ChatGPT usando el historial de conversación
         chat_response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="openai('o3-mini')",
             messages=conversation
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
