@@ -3,7 +3,6 @@ import os
 import subprocess
 import shutil
 import requests
-from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 import openai
 
@@ -88,12 +87,8 @@ def transcribe():
             messages=conversation
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
-        # Remove any pre-existing date text from the assistant message, then append the correct date.
-        assistant_text_clean = assistant_text.split("Fecha:")[0].strip()
-        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        assistant_text_with_date = f"{assistant_text_clean}\n\nFecha: {current_date}"
-        conversation.append({"role": "assistant", "content": assistant_text_with_date})
-        return jsonify({"transcript": user_text, "assistant": assistant_text_with_date})
+        conversation.append({"role": "assistant", "content": assistant_text})
+        return jsonify({"transcript": user_text, "assistant": assistant_text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
