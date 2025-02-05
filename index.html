@@ -1,0 +1,136 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Audio Recorder, Transcriber & ChatGPT</title>
+    <style>
+      #recordBtn {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+        touch-action: none;
+      }
+      #recordBtn.pressed {
+        background-color: #f44336;
+      }
+      #output {
+        margin-top: 20px;
+        font-size: 18px;
+        font-family: Arial, sans-serif;
+      }
+      .message {
+        margin-bottom: 15px;
+      }
+      .user {
+        color: #007bff;
+      }
+      .assistant {
+        color: #28a745;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="recordBtn">Hold to Record</button>
+    <div id="output"></div>
+    <script>
+      let mediaRecorder;
+      let audioChunks = [];
+      const recordBtn = document.getElementById('recordBtn');
+      const outputDiv = document.getElementById('output');
+
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+          };
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            sendAudio(audioBlob);
+            audioChunks = [];
+          };
+
+          // Pointer events for devices that support them
+          recordBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (mediaRecorder.state === "inactive") {
+              console.log("pointerdown fired");
+              mediaRecorder.start();
+              recordBtn.classList.add('pressed');
+            }
+          });
+          recordBtn.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            if (mediaRecorder.state === "recording") {
+              console.log("pointerup fired");
+              mediaRecorder.stop();
+              recordBtn.classList.remove('pressed');
+            }
+          });
+          recordBtn.addEventListener('pointercancel', (e) => {
+            e.preventDefault();
+            if (mediaRecorder.state === "recording") {
+              console.log("pointercancel fired");
+              mediaRecorder.stop();
+              recordBtn.classList.remove('pressed');
+            }
+          });
+
+          // Fallback for touch events
+          recordBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (mediaRecorder.state === "inactive") {
+              console.log("touchstart fired");
+              mediaRecorder.start();
+              recordBtn.classList.add('pressed');
+            }
+          });
+          recordBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (mediaRecorder.state === "recording") {
+              console.log("touchend fired");
+              mediaRecorder.stop();
+              recordBtn.classList.remove('pressed');
+            }
+          });
+        })
+        .catch(err => {
+          console.error('Error accessing microphone', err);
+        });
+
+      function sendAudio(audioBlob) {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+
+        fetch('/transcribe', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.transcript && data.assistant) {
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.innerText = "User: " + data.transcript;
+            const assistantMsg = document.createElement('div');
+            assistantMsg.className = 'message assistant';
+            assistantMsg.innerText = "Assistant: " + data.assistant;
+            outputDiv.appendChild(userMsg);
+            outputDiv.appendChild(assistantMsg);
+          } else if (data.error) {
+            outputDiv.innerText = 'Error: ' + data.error;
+          }
+        })
+        .catch(err => {
+          outputDiv.innerText = 'Error: ' + err;
+        });
+      }
+    </script>
+  </body>
+</html>
