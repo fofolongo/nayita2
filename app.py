@@ -13,12 +13,11 @@ ffmpeg_path = shutil.which("ffmpeg")
 if ffmpeg_path is None:
     ffmpeg_path = os.getenv("FFMPEG_PATH")
     if ffmpeg_path is None or not os.path.exists(ffmpeg_path):
-        raise EnvironmentError("ffmpeg not found in PATH. Please install ffmpeg and add it to your system PATH, "
-                               "or set the FFMPEG_PATH environment variable to the full path of the ffmpeg executable.")
+        raise EnvironmentError("ffmpeg not found in PATH. Please install ffmpeg and add it to your system PATH, or set the FFMPEG_PATH environment variable to the full path of the ffmpeg executable.")
 
-# Global conversation history with an initial system prompt.
+# Global conversation history with an initial system prompt in Spanish.
 conversation = [
-    {"role": "system", "content": "You are ChatGPT. You are helpful."}
+    {"role": "system", "content": "Eres ChatGPT. Responde siempre en español y sé servicial."}
 ]
 
 @app.route('/')
@@ -28,7 +27,7 @@ def index():
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
     if 'audio' not in request.files:
-        return jsonify({"error": "No audio file provided"}), 400
+        return jsonify({"error": "No se proporcionó archivo de audio"}), 400
     audio_file = request.files['audio']
     input_filename = "temp_input.webm"
     output_filename = "temp_output.wav"
@@ -41,19 +40,19 @@ def transcribe():
         )
         if result.returncode != 0:
             os.remove(input_filename)
-            return jsonify({"error": "Conversion failed: " + result.stderr.decode("utf-8")}), 500
+            return jsonify({"error": "La conversión falló: " + result.stderr.decode("utf-8")}), 500
         with open(output_filename, "rb") as f:
             transcript = openai.Audio.transcribe("whisper-1", f)
         user_text = transcript["text"]
-        # Add the transcribed text as a user message in the conversation
+        # Agregar el mensaje del usuario a la conversación
         conversation.append({"role": "user", "content": user_text})
-        # Get ChatGPT response using the conversation history
+        # Obtener la respuesta de ChatGPT usando el historial de conversación
         chat_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=conversation
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
-        # Append assistant response to conversation history
+        # Agregar la respuesta del asistente al historial
         conversation.append({"role": "assistant", "content": assistant_text})
         return jsonify({"transcript": user_text, "assistant": assistant_text})
     except Exception as e:
@@ -65,5 +64,4 @@ def transcribe():
             os.remove(output_filename)
 
 if __name__ == '__main__':
-    # Change host to '0.0.0.0' so that the server is accessible from other devices in your network.
     app.run(host='0.0.0.0', debug=True)

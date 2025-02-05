@@ -3,15 +3,15 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Audio Recorder, Transcriber & ChatGPT</title>
+    <title>Grabador de Audio y ChatGPT</title>
     <style>
       #recordBtn {
-        padding: 10px 20px;
-        font-size: 16px;
+        padding: 20px 40px; /* Botón más grande */
+        font-size: 24px;    /* Texto más grande */
         background-color: #4CAF50;
         border: none;
         color: white;
-        border-radius: 4px;
+        border-radius: 8px;
         cursor: pointer;
         user-select: none;
         touch-action: none;
@@ -36,7 +36,7 @@
     </style>
   </head>
   <body>
-    <button id="recordBtn">Hold to Record</button>
+    <button id="recordBtn">mande?</button>
     <div id="output"></div>
     <script>
       let mediaRecorder;
@@ -56,11 +56,10 @@
             audioChunks = [];
           };
 
-          // Pointer events for devices that support them
+          // Usar eventos pointer para dispositivos compatibles
           recordBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "inactive") {
-              console.log("pointerdown fired");
               mediaRecorder.start();
               recordBtn.classList.add('pressed');
             }
@@ -68,7 +67,6 @@
           recordBtn.addEventListener('pointerup', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "recording") {
-              console.log("pointerup fired");
               mediaRecorder.stop();
               recordBtn.classList.remove('pressed');
             }
@@ -76,17 +74,15 @@
           recordBtn.addEventListener('pointercancel', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "recording") {
-              console.log("pointercancel fired");
               mediaRecorder.stop();
               recordBtn.classList.remove('pressed');
             }
           });
 
-          // Fallback for touch events
+          // Fallback para eventos touch
           recordBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "inactive") {
-              console.log("touchstart fired");
               mediaRecorder.start();
               recordBtn.classList.add('pressed');
             }
@@ -94,14 +90,13 @@
           recordBtn.addEventListener('touchend', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "recording") {
-              console.log("touchend fired");
               mediaRecorder.stop();
               recordBtn.classList.remove('pressed');
             }
           });
         })
         .catch(err => {
-          console.error('Error accessing microphone', err);
+          console.error('Error accediendo al micrófono', err);
         });
 
       function sendAudio(audioBlob) {
@@ -117,10 +112,10 @@
           if (data.transcript && data.assistant) {
             const userMsg = document.createElement('div');
             userMsg.className = 'message user';
-            userMsg.innerText = "User: " + data.transcript;
+            userMsg.innerText = "Usuario: " + data.transcript;
             const assistantMsg = document.createElement('div');
             assistantMsg.className = 'message assistant';
-            assistantMsg.innerText = "Assistant: " + data.assistant;
+            assistantMsg.innerText = "Asistente: " + data.assistant;
             outputDiv.appendChild(userMsg);
             outputDiv.appendChild(assistantMsg);
           } else if (data.error) {
