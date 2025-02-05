@@ -24,15 +24,6 @@
       #recordBtn.pressed {
         background-color: #f44336;
       }
-      #loadLogsBtn {
-        position: fixed;
-        top: 80px;
-        left: 20px;
-        font-size: 24px;
-        padding: 10px 20px;
-        cursor: pointer;
-        z-index: 1001;
-      }
       /* Increase top margin for output to appear below the fixed button */
       #output {
         margin-top: 250px;
@@ -40,6 +31,15 @@
         font-family: Arial, sans-serif;
         max-height: calc(100vh - 250px);
         overflow-y: auto;
+      }
+      #loadLogsBtn {
+        position: fixed;
+        top: 80px;
+        left: 0px; /* Moved fully to the left */
+        font-size: 24px;
+        padding: 10px 20px;
+        cursor: pointer;
+        z-index: 1001;
       }
       .message {
         margin-bottom: 15px;

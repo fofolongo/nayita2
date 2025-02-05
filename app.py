@@ -1,4 +1,4 @@
-# app.py
+# app.py (unchanged aside from the log filename and new endpoint)
 import os
 import subprocess
 import shutil
@@ -24,13 +24,11 @@ log_filename = "interaction_" + datetime.now().strftime("%Y%m%d_%H%M") + ".log"
 conversation = [
     {"role": "system", "content": (
         """
-        you are the best smart ai assintant in the universe, you can remember things, calculate
+        you are the best smart ai assistant in the universe
         always answer in spanish
-        you can remember things, to dos, tasks
-        you can search the internet
         always be concrete
         dont give me instructions unless i told you to
-        you will have 2 lists to remember, tareas and gastos, you are able to categorize them
+        you will have 3 lists: things to remember, tasks, and expenses, you are able to categorize them from the prompt
         if this is understood always refer to me as fofo and greet me as hi fofo
         """
     )}
@@ -99,22 +97,4 @@ def transcribe():
         log_interaction(user_text, assistant_text)
         return jsonify({"transcript": user_text, "assistant": assistant_text})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if os.path.exists(input_filename):
-            os.remove(input_filename)
-        if os.path.exists(output_filename):
-            os.remove(output_filename)
-
-# New endpoint to load previous logs
-@app.route('/load_logs', methods=['GET'])
-def load_logs():
-    if os.path.exists(log_filename):
-        with open(log_filename, "r", encoding="utf-8") as log_file:
-            logs = log_file.read()
-        return jsonify({"logs": logs})
-    else:
-        return jsonify({"logs": "No logs found."})
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+        re
