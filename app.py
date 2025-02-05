@@ -88,9 +88,10 @@ def transcribe():
             messages=conversation
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
-        # Append the current date to the assistant response (so it is part of the message)
+        # Remove any pre-existing date text from the assistant message, then append the correct date.
+        assistant_text_clean = assistant_text.split("Fecha:")[0].strip()
         current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        assistant_text_with_date = f"{assistant_text}\n\nFecha: {current_date}"
+        assistant_text_with_date = f"{assistant_text_clean}\n\nFecha: {current_date}"
         conversation.append({"role": "assistant", "content": assistant_text_with_date})
         return jsonify({"transcript": user_text, "assistant": assistant_text_with_date})
     except Exception as e:
