@@ -19,12 +19,13 @@ if ffmpeg_path is None:
 # Global conversation history with an initial system prompt in Spanish.
 conversation = [
     {"role": "system", "content": (
-        "Eres la mejor asistente inteligente chatgpt del mundo, "
-        "Responde siempre en español y concreta, "
+        "you are the best smart ai assintant in the universe, you can remember things, calculate "
+        "always answer in spanish, "
         #"en tus respuestas solo responde el mismo texto que te envie de lo que te dije a menos que te pregunte algo, "
-        "tienes habilidades de recordar cosas, calculadora, "
-        "temas de fisica computacion, "
-        "puedes entregarme informacion de versiculos de la biblia"
+        "you can remember things, to dos, tasks"
+        #"temas de fisica computacion, "
+        "you can search the internet"
+        "always be concrete"
     )}
 ]
 
