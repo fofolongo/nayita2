@@ -126,11 +126,21 @@
             assistantMsg.innerText = "Asistente: " + data.assistant;
             outputDiv.appendChild(userMsg);
             outputDiv.appendChild(assistantMsg);
-            // Create an audio element to play the TTS audio
+            
+            // Create an audio element to play the assistant's response automatically
             const audioEl = document.createElement('audio');
             audioEl.src = data.assistant_audio;
-            audioEl.controls = true;
-            outputDiv.appendChild(audioEl);
+            // Optional: hide controls if you want seamless playback
+            audioEl.style.display = 'none';
+            document.body.appendChild(audioEl);
+            // Auto-play the audio if allowed (may require user interaction in some browsers)
+            audioEl.play().catch(error => {
+              console.error("Auto-play was prevented:", error);
+              // Optionally show controls if auto-play is blocked
+              audioEl.style.display = 'block';
+              audioEl.controls = true;
+            });
+            
             // Auto-scroll to the bottom when new text appears
             outputDiv.scrollTop = outputDiv.scrollHeight;
           } else if (data.error) {
