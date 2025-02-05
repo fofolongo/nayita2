@@ -1,4 +1,3 @@
-# app.py (unchanged aside from the log filename and new endpoint)
 import os
 import subprocess
 import shutil
@@ -55,7 +54,7 @@ def internet_search(query):
         return f"Resultados simulados para la búsqueda: {query}"
 
 def log_interaction(user_text, assistant_text):
-    # Append a timestamped log entry to the log file.
+    # Append a timestamped log entry to the log file named with creation date.
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_entry = f"{timestamp} - Usuario: {user_text}\nAsistente: {assistant_text}\n{'-'*50}\n"
     with open(log_filename, "a", encoding="utf-8") as log_file:
@@ -97,4 +96,21 @@ def transcribe():
         log_interaction(user_text, assistant_text)
         return jsonify({"transcript": user_text, "assistant": assistant_text})
     except Exception as e:
-        re
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if os.path.exists(input_filename):
+            os.remove(input_filename)
+        if os.path.exists(output_filename):
+            os.remove(output_filename)
+
+@app.route('/load_logs', methods=['GET'])
+def load_logs():
+    if os.path.exists(log_filename):
+        with open(log_filename, "r", encoding="utf-8") as f:
+            log_data = f.read()
+        return jsonify({"logs": log_data})
+    else:
+        return jsonify({"logs": "No logs found."})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug=True)
