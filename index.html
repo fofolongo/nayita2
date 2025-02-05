@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html>
   <head>
@@ -40,38 +41,15 @@
       .assistant {
         color: #28a745;
       }
-      /* Style for the buttons on the top right */
-      #loadLogBtn, #sendLogsBtn {
-        position: fixed;
-        right: 10px;
-        top: 10px;
-        z-index: 1000;
-        padding: 10px 20px;
-        font-size: 20px;
-        background-color: #555;
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        margin-bottom: 5px;
-      }
-      /* Position second button below the first one */
-      #sendLogsBtn {
-        top: 60px;
-      }
     </style>
   </head>
   <body>
     <button id="recordBtn">mande?</button>
-    <button id="loadLogBtn">Load Logs</button>
-    <button id="sendLogsBtn">Send Logs as Prompt</button>
     <div id="output"></div>
     <script>
       let mediaRecorder;
       let audioChunks = [];
       const recordBtn = document.getElementById('recordBtn');
-      const loadLogBtn = document.getElementById('loadLogBtn');
-      const sendLogsBtn = document.getElementById('sendLogsBtn');
       const outputDiv = document.getElementById('output');
 
       navigator.mediaDevices.getUserMedia({ audio: true })
@@ -86,7 +64,7 @@
             audioChunks = [];
           };
 
-          // Pointer events
+          // Usar eventos pointer para dispositivos compatibles
           recordBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "inactive") {
@@ -109,7 +87,7 @@
             }
           });
 
-          // Touch events fallback
+          // Fallback para eventos touch
           recordBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "inactive") {
@@ -142,12 +120,17 @@
           if (data.transcript && data.assistant) {
             const userMsg = document.createElement('div');
             userMsg.className = 'message user';
-            userMsg.innerText = "fofo: " + data.transcript;
+            userMsg.innerText = "Usuario: " + data.transcript;
             const assistantMsg = document.createElement('div');
             assistantMsg.className = 'message assistant';
-            assistantMsg.innerText = "nayita: " + data.assistant;
+            assistantMsg.innerText = "Asistente: " + data.assistant;
             outputDiv.appendChild(userMsg);
             outputDiv.appendChild(assistantMsg);
+            // Create an audio element to play the TTS audio
+            const audioEl = document.createElement('audio');
+            audioEl.src = data.assistant_audio;
+            audioEl.controls = true;
+            outputDiv.appendChild(audioEl);
             // Auto-scroll to the bottom when new text appears
             outputDiv.scrollTop = outputDiv.scrollHeight;
           } else if (data.error) {
@@ -158,36 +141,6 @@
           outputDiv.innerText = 'Error: ' + err;
         });
       }
-
-      loadLogBtn.addEventListener('click', () => {
-        fetch('/load_logs')
-          .then(response => response.json())
-          .then(data => {
-            const logDiv = document.createElement('div');
-            logDiv.className = 'message log';
-            logDiv.innerText = "Log:\n" + data.logs;
-            outputDiv.appendChild(logDiv);
-            outputDiv.scrollTop = outputDiv.scrollHeight;
-          })
-          .catch(err => {
-            console.error('Error loading logs:', err);
-          });
-      });
-
-      sendLogsBtn.addEventListener('click', () => {
-        fetch('/send_logs')
-          .then(response => response.json())
-          .then(data => {
-            const promptMsg = document.createElement('div');
-            promptMsg.className = 'message assistant';
-            promptMsg.innerText = "nayita (logs prompt): " + data.prompt_response;
-            outputDiv.appendChild(promptMsg);
-            outputDiv.scrollTop = outputDiv.scrollHeight;
-          })
-          .catch(err => {
-            console.error('Error sending logs as prompt:', err);
-          });
-      });
     </script>
   </body>
 </html>

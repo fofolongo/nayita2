@@ -1,3 +1,4 @@
+# app.py
 import os
 import subprocess
 import shutil
@@ -5,6 +6,7 @@ import requests
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 import openai
+from gtts import gTTS  # import gTTS for text-to-speech
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -15,9 +17,6 @@ if ffmpeg_path is None:
     ffmpeg_path = os.getenv("FFMPEG_PATH")
     if ffmpeg_path is None or not os.path.exists(ffmpeg_path):
         raise EnvironmentError("ffmpeg not found in PATH. Please install ffmpeg and add it to your system PATH, or set the FFMPEG_PATH environment variable to the full path of the ffmpeg executable.")
-
-# Create a log filename that includes the creation date with hours and minutes.
-log_filename = "interaction_" + datetime.now().strftime("%Y%m%d_%H%M") + ".log"
 
 # Global conversation history with an initial system prompt in Spanish.
 conversation = [
@@ -55,13 +54,6 @@ def internet_search(query):
     else:
         return f"Resultados simulados para la búsqueda: {query}"
 
-def log_interaction(user_text, assistant_text):
-    # Append a timestamped log entry to the log file.
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_entry = f"{timestamp} - Usuario: {user_text}\nAsistente: {assistant_text}\n{'-'*50}\n"
-    with open(log_filename, "a", encoding="utf-8") as log_file:
-        log_file.write(log_entry)
-
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
@@ -86,17 +78,26 @@ def transcribe():
         with open(output_filename, "rb") as f:
             transcript = openai.Audio.transcribe("whisper-1", f)
         user_text = transcript["text"]
+        # Add the user's transcribed text to conversation history.
         conversation.append({"role": "user", "content": user_text})
+        # Perform an internet search using the transcribed text to add context.
         search_results = internet_search(user_text)
         conversation.append({"role": "system", "content": f"Resultados de búsqueda en internet:\n{search_results}"})
+        # Get chat completion using the updated conversation history.
         chat_response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=conversation
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
         conversation.append({"role": "assistant", "content": assistant_text})
-        log_interaction(user_text, assistant_text)
-        return jsonify({"transcript": user_text, "assistant": assistant_text})
+        
+        # Convert the assistant's text to speech (Spanish) using gTTS.
+        tts = gTTS(assistant_text, lang='es')
+        # Save the TTS output to a file (in production, use a unique filename per interaction)
+        tts.save("assistant.mp3")
+        
+        # Return JSON including a URL to the generated MP3 file.
+        return jsonify({"transcript": user_text, "assistant": assistant_text, "assistant_audio": "/assistant.mp3"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
@@ -104,39 +105,6 @@ def transcribe():
             os.remove(input_filename)
         if os.path.exists(output_filename):
             os.remove(output_filename)
-
-@app.route('/load_logs', methods=['GET'])
-def load_logs():
-    if os.path.exists(log_filename):
-        with open(log_filename, "r", encoding="utf-8") as f:
-            log_data = f.read()
-        return jsonify({"logs": log_data})
-    else:
-        return jsonify({"logs": "No logs found."})
-
-@app.route('/send_logs', methods=['GET'])
-def send_logs():
-    """
-    Reads the current log file and sends its content as a new prompt.
-    The log content is appended as a new user message, then a chat completion is generated.
-    """
-    if os.path.exists(log_filename):
-        with open(log_filename, "r", encoding="utf-8") as f:
-            log_data = f.read()
-        # Append the logs as a new user prompt.
-        prompt = f"Estos son los logs previos:\n{log_data}"
-        conversation.append({"role": "user", "content": prompt})
-        chat_response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=conversation
-        )
-        assistant_text = chat_response["choices"][0]["message"]["content"]
-        conversation.append({"role": "assistant", "content": assistant_text})
-        # Optionally log this interaction as well.
-        log_interaction(prompt, assistant_text)
-        return jsonify({"prompt_response": assistant_text})
-    else:
-        return jsonify({"prompt_response": "No logs found."})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
