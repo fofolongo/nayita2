@@ -46,10 +46,56 @@
     <button id="recordBtn">mande?</button>
     <div id="output"></div>
     <script>
+      // Define a key to store conversation history in localStorage.
+      const STORAGE_KEY = "conversationLog";
+
+      // Retrieve stored conversation from localStorage (if any) and render it.
+      function loadConversation() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          try {
+            return JSON.parse(stored);
+          } catch (e) {
+            console.error("Error parsing conversation log", e);
+            return [];
+          }
+        }
+        return [];
+      }
+
+      // Save the conversation array to localStorage.
+      function saveConversation(conversation) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(conversation));
+      }
+
+      // Render the conversation array to the outputDiv.
+      function renderConversation(convo) {
+        outputDiv.innerHTML = ""; // clear
+        convo.forEach(msg => {
+          const msgDiv = document.createElement('div');
+          msgDiv.className = 'message ' + (msg.role === "user" ? 'user' : 'assistant');
+          // Prefix messages based on role.
+          if (msg.role === "user") {
+            msgDiv.innerText = "fofo: " + msg.content;
+          } else if (msg.role === "assistant") {
+            msgDiv.innerText = "nayita: " + msg.content;
+          } else {
+            msgDiv.innerText = msg.content;
+          }
+          outputDiv.appendChild(msgDiv);
+        });
+        // Auto-scroll to bottom
+        outputDiv.scrollTop = outputDiv.scrollHeight;
+      }
+
+      // Global conversation array stored in the browser.
+      let conversationLog = loadConversation();
+      const outputDiv = document.getElementById('output');
+      renderConversation(conversationLog);
+
       let mediaRecorder;
       let audioChunks = [];
       const recordBtn = document.getElementById('recordBtn');
-      const outputDiv = document.getElementById('output');
 
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
@@ -63,7 +109,7 @@
             audioChunks = [];
           };
 
-          // Usar eventos pointer para dispositivos compatibles
+          // Use pointer events for modern devices
           recordBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "inactive") {
@@ -86,7 +132,7 @@
             }
           });
 
-          // Fallback para eventos touch
+          // Fallback for touch events
           recordBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "inactive") {
@@ -117,16 +163,22 @@
         .then(response => response.json())
         .then(data => {
           if (data.transcript && data.assistant) {
-            const userMsg = document.createElement('div');
-            userMsg.className = 'message user';
-            userMsg.innerText = "fofo: " + data.transcript;
-            const assistantMsg = document.createElement('div');
-            assistantMsg.className = 'message assistant';
-            assistantMsg.innerText = "nayita: " + data.assistant;
-            outputDiv.appendChild(userMsg);
-            outputDiv.appendChild(assistantMsg);
-            // Auto-scroll to the bottom when new text appears
-            outputDiv.scrollTop = outputDiv.scrollHeight;
+            // Create and append user message
+            const userMsg = {
+              role: "user",
+              content: data.transcript
+            };
+            conversationLog.push(userMsg);
+            // Create and append assistant message
+            const assistantMsg = {
+              role: "assistant",
+              content: data.assistant
+            };
+            conversationLog.push(assistantMsg);
+            // Save updated conversation
+            saveConversation(conversationLog);
+            // Render conversation
+            renderConversation(conversationLog);
           } else if (data.error) {
             outputDiv.innerText = 'Error: ' + data.error;
           }
