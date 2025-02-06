@@ -6,7 +6,6 @@ import requests
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 import openai
-from gtts import gTTS  # import gTTS for text-to-speech
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -54,6 +53,13 @@ def internet_search(query):
     else:
         return f"Resultados simulados para la búsqueda: {query}"
 
+def log_interaction(user_text, assistant_text):
+    # Append a timestamped log entry to 'interaction.log'
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = f"{timestamp} - Usuario: {user_text}\nAsistente: {assistant_text}\n{'-'*50}\n"
+    with open("interaction.log", "a", encoding="utf-8") as log_file:
+        log_file.write(log_entry)
+
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
@@ -90,14 +96,9 @@ def transcribe():
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
         conversation.append({"role": "assistant", "content": assistant_text})
-        
-        # Convert the assistant's text to speech (Spanish) using gTTS.
-        tts = gTTS(assistant_text, lang='es')
-        # Save the TTS output to a file (in production, use a unique filename per interaction)
-        tts.save("assistant.mp3")
-        
-        # Return JSON including a URL to the generated MP3 file.
-        return jsonify({"transcript": user_text, "assistant": assistant_text, "assistant_audio": "/assistant.mp3"})
+        # Log the interaction to a file.
+        log_interaction(user_text, assistant_text)
+        return jsonify({"transcript": user_text, "assistant": assistant_text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:

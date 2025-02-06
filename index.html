@@ -64,7 +64,7 @@
             audioChunks = [];
           };
 
-          // Use pointer events
+          // Usar eventos pointer para dispositivos compatibles
           recordBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "inactive") {
@@ -87,7 +87,7 @@
             }
           });
 
-          // Fallback for touch events
+          // Fallback para eventos touch
           recordBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (mediaRecorder.state === "inactive") {
@@ -126,20 +126,7 @@
             assistantMsg.innerText = "Asistente: " + data.assistant;
             outputDiv.appendChild(userMsg);
             outputDiv.appendChild(assistantMsg);
-            
-            // Create an audio element and auto-play the assistant's response
-            const audioEl = document.createElement('audio');
-            // Append a timestamp to avoid caching (e.g., ?t=timestamp)
-            audioEl.src = data.assistant_audio + "?t=" + new Date().getTime();
-            audioEl.loop = false;
-            audioEl.autoplay = true;
-            // Remove the audio element after playback ends
-            audioEl.addEventListener('ended', () => {
-              audioEl.remove();
-            });
-            document.body.appendChild(audioEl);
-            
-            // Auto-scroll to the bottom
+            // Auto-scroll to the bottom when new text appears
             outputDiv.scrollTop = outputDiv.scrollHeight;
           } else if (data.error) {
             outputDiv.innerText = 'Error: ' + data.error;
