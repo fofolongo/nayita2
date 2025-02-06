@@ -1,4 +1,3 @@
-# app.py
 import os
 import subprocess
 import shutil
@@ -53,13 +52,6 @@ def internet_search(query):
     else:
         return f"Resultados simulados para la búsqueda: {query}"
 
-def log_interaction(user_text, assistant_text):
-    # Append a timestamped log entry to 'interaction.log'
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_entry = f"{timestamp} - Usuario: {user_text}\nAsistente: {assistant_text}\n{'-'*50}\n"
-    with open("interaction.log", "a", encoding="utf-8") as log_file:
-        log_file.write(log_entry)
-
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
@@ -84,7 +76,7 @@ def transcribe():
         with open(output_filename, "rb") as f:
             transcript = openai.Audio.transcribe("whisper-1", f)
         user_text = transcript["text"]
-        # Add the user's transcribed text to conversation history.
+        # Append the user's transcribed text to conversation history.
         conversation.append({"role": "user", "content": user_text})
         # Perform an internet search using the transcribed text to add context.
         search_results = internet_search(user_text)
@@ -96,8 +88,17 @@ def transcribe():
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
         conversation.append({"role": "assistant", "content": assistant_text})
-        # Log the interaction to a file.
-        log_interaction(user_text, assistant_text)
+        
+        # Save a log file with each interaction.
+        # Log file name: logYYYYMMDDHHMM.txt (in a "logs" directory)
+        log_dir = "logs"
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        log_filename = os.path.join(log_dir, "log" + datetime.now().strftime("%Y%m%d%H%M") + ".txt")
+        with open(log_filename, "w", encoding="utf-8") as log_file:
+            log_file.write("fofo: " + user_text + "\n")
+            log_file.write("nayita: " + assistant_text + "\n")
+        
         return jsonify({"transcript": user_text, "assistant": assistant_text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
