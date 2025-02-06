@@ -32,6 +32,25 @@ conversation = [
     )}
 ]
 
+def load_last_user_message():
+    logs_dir = "logs"
+    if os.path.exists(logs_dir):
+        # Find files with the naming pattern "logYYYYMMDDHHMM.txt"
+        files = [f for f in os.listdir(logs_dir) if f.startswith("log") and f.endswith(".txt")]
+        if files:
+            files.sort()  # sort lexicographically, so the last file is the latest
+            last_log = os.path.join(logs_dir, files[-1])
+            with open(last_log, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.lower().startswith("fofo:"):
+                        return line[len("fofo:"):].strip()
+    return None
+
+# Load the last user message from log file (if exists) and add to conversation history.
+last_user_msg = load_last_user_message()
+if last_user_msg:
+    conversation.append({"role": "user", "content": last_user_msg})
+
 def internet_search(query):
     # Replace this with actual search API integration if available.
     # For demonstration, this function returns a simulated search result.
@@ -88,9 +107,7 @@ def transcribe():
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
         conversation.append({"role": "assistant", "content": assistant_text})
-        
         # Save a log file with each interaction.
-        # Log file name: logYYYYMMDDHHMM.txt (in a "logs" directory)
         log_dir = "logs"
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
@@ -98,7 +115,6 @@ def transcribe():
         with open(log_filename, "w", encoding="utf-8") as log_file:
             log_file.write("fofo: " + user_text + "\n")
             log_file.write("nayita: " + assistant_text + "\n")
-        
         return jsonify({"transcript": user_text, "assistant": assistant_text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
