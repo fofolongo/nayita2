@@ -14,10 +14,7 @@ ffmpeg_path = shutil.which("ffmpeg")
 if ffmpeg_path is None:
     ffmpeg_path = os.getenv("FFMPEG_PATH")
     if ffmpeg_path is None or not os.path.exists(ffmpeg_path):
-        raise EnvironmentError(
-            "ffmpeg not found in PATH. Please install ffmpeg and add it to your system PATH, "
-            "or set the FFMPEG_PATH environment variable to the full path of the ffmpeg executable."
-        )
+        raise EnvironmentError("ffmpeg not found in PATH. Please install ffmpeg and add it to your system PATH, or set the FFMPEG_PATH environment variable to the full path of the ffmpeg executable.")
 
 # Global conversation history with an initial system prompt in Spanish.
 conversation = [
@@ -41,15 +38,12 @@ def load_last_user_message():
         # Find files with the naming pattern "logYYYYMMDDHHMM.txt"
         files = [f for f in os.listdir(logs_dir) if f.startswith("log") and f.endswith(".txt")]
         if files:
-            files.sort()  # sorted lexicographically; last file is the latest.
-            latest_log = os.path.join(logs_dir, files[-1])
-            with open(latest_log, "r", encoding="utf-8") as f:
+            files.sort()  # sort lexicographically, so the last file is the latest
+            last_log = os.path.join(logs_dir, files[-1])
+            with open(last_log, "r", encoding="utf-8") as f:
                 for line in f:
                     if line.lower().startswith("fofo:"):
-                        user_msg = line[len("fofo:"):].strip()
-                        print(f"Log loaded successfully from {latest_log}: {user_msg}")
-                        return user_msg
-    print("No log loaded.")
+                        return line[len("fofo:"):].strip()
     return None
 
 # Load the last user message from log file (if exists) and add to conversation history.
@@ -58,7 +52,7 @@ if last_user_msg:
     conversation.append({"role": "user", "content": last_user_msg})
 
 def internet_search(query):
-    # Replace this with an actual search API integration if available.
+    # Replace this with actual search API integration if available.
     # For demonstration, this function returns a simulated search result.
     search_api_key = os.getenv("SEARCH_API_KEY")
     search_endpoint = os.getenv("SEARCH_API_ENDPOINT")  # e.g., Bing Search API endpoint
@@ -113,7 +107,7 @@ def transcribe():
         )
         assistant_text = chat_response["choices"][0]["message"]["content"]
         conversation.append({"role": "assistant", "content": assistant_text})
-        # Save a log file with this interaction.
+        # Save a log file with each interaction.
         log_dir = "logs"
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
