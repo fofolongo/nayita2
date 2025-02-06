@@ -138,3 +138,143 @@
     </script>
   </body>
 </html>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Grabador de Audio y ChatGPT</title>
+    <style>
+      #recordBtn {
+        padding: 60px 300px; /* Botón más grande */
+        font-size: 72px;    /* Texto más grande */
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        border-radius: 24px;
+        cursor: pointer;
+        user-select: none;
+        touch-action: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+      }
+      #recordBtn.pressed {
+        background-color: #f44336;
+      }
+      /* Increase top margin for output to appear below the fixed button */
+      #output {
+        margin-top: 250px;
+        font-size: 36px;
+        font-family: Arial, sans-serif;
+        max-height: calc(100vh - 250px);
+        overflow-y: auto;
+      }
+      .message {
+        margin-bottom: 15px;
+      }
+      .user {
+        color: #007bff;
+      }
+      .assistant {
+        color: #28a745;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="recordBtn">mande?</button>
+    <div id="output"></div>
+    <script>
+      let mediaRecorder;
+      let audioChunks = [];
+      const recordBtn = document.getElementById('recordBtn');
+      const outputDiv = document.getElementById('output');
+
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+          };
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            sendAudio(audioBlob);
+            audioChunks = [];
+          };
+
+          // Usar eventos pointer para dispositivos compatibles
+          recordBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (mediaRecorder.state === "inactive") {
+              mediaRecorder.start();
+              recordBtn.classList.add('pressed');
+            }
+          });
+          recordBtn.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            if (mediaRecorder.state === "recording") {
+              mediaRecorder.stop();
+              recordBtn.classList.remove('pressed');
+            }
+          });
+          recordBtn.addEventListener('pointercancel', (e) => {
+            e.preventDefault();
+            if (mediaRecorder.state === "recording") {
+              mediaRecorder.stop();
+              recordBtn.classList.remove('pressed');
+            }
+          });
+
+          // Fallback para eventos touch
+          recordBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (mediaRecorder.state === "inactive") {
+              mediaRecorder.start();
+              recordBtn.classList.add('pressed');
+            }
+          });
+          recordBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (mediaRecorder.state === "recording") {
+              mediaRecorder.stop();
+              recordBtn.classList.remove('pressed');
+            }
+          });
+        })
+        .catch(err => {
+          console.error('Error accediendo al micrófono', err);
+        });
+
+      function sendAudio(audioBlob) {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+
+        fetch('/transcribe', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.transcript && data.assistant) {
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.innerText = "fofo: " + data.transcript;
+            const assistantMsg = document.createElement('div');
+            assistantMsg.className = 'message assistant';
+            assistantMsg.innerText = "nayita: " + data.assistant;
+            outputDiv.appendChild(userMsg);
+            outputDiv.appendChild(assistantMsg);
+            // Auto-scroll to the bottom when new text appears
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+          } else if (data.error) {
+            outputDiv.innerText = 'Error: ' + data.error;
+          }
+        })
+        .catch(err => {
+          outputDiv.innerText = 'Error: ' + err;
+        });
+      }
+    </script>
+  </body>
+</html>
